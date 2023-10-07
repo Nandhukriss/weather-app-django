@@ -1,0 +1,158 @@
+
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://kit.fontawesome.com/fb2d837902.js" crossorigin="anonymous"></script>
+<style>
+
+    body{
+        background-image: url("{% static 'images\World Map.svg' %}");
+        background-size: cover;
+        background-attachment: fixed;
+    
+
+    }
+    input:focus{
+        border-color: #ffffff;
+        box-shadow: -3px 3px 39px 27px black;
+        -webkit-box-shadow: -3px 3px 39px 27px rgba(255,255,255,0.05);
+        -moz-box-shadow: -3px 3px 39px 27px rgba(255,255,255,0.05);
+        border: none;
+        outline: none;
+        
+
+    }
+    input[type='text']{
+       background-color: #ffffff;
+       border: none;
+       color: gray;
+       font-weight: bold;
+    }
+    .ui-autocomplete {
+    max-height: 200px; /* Set a maximum height for the dropdown */
+    overflow-y: auto; /* Add vertical scroll if needed */
+    border: 1px solid #ccc; /* Add a border */
+    background-color: white; /* Background color for the dropdown */
+}
+
+.ui-menu-item {
+    padding: 5px 10px; /* Adjust padding for each item */
+    cursor: pointer; /* Change cursor to pointer for better usability */
+}
+
+.ui-menu-item:hover {
+    background-color: #f0f0f0; /* Highlight on hover */
+}
+
+.ui-state-active {
+    background-color: #1C538E; /* Active item background color */
+    color: white; /* Active item text color */
+}
+.ui-helper-hidden-accessible{
+    display: none;
+}
+</style>
+</head>
+<body class="font-sans ... bg-neutral-50 flex flex-col justify-center items-center ">
+    <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white m-4">Weather App</h1>
+    <div>
+        <form action="" method="post" id="form">
+            {% csrf_token %}
+            <div class="flex flex-row mt-5">
+                <input type="text" name="city" id="city" class="bg-gray-50 border border-gray-300 text-gray-900 text-l rounded-lg focus:ring-blue-20 focus:border-blue-500 block w-96 p-5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 " placeholder="Enter a City Name To Get Weather Data 🌥️" required >
+                <button type="submit" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow mx-2"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+          
+        </form>
+        <div class="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mx-15  mt-4" id="show_data">
+            <i class="fa-solid fa-cloud" style="color: #ffffff;"></i>
+
+            <h5 class="mb-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white capitalize" id="city_name"></h5>
+
+            <p class="mb-3 font-normal text-gray-500 dark:text-gray-400" id="atmosphere"></p>
+            <p class="mb-3 font-normal text-gray-500 dark:text-gray-400" id="Temperature"></p>
+        
+        </div>  
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>  
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    
+    <script>
+            
+
+        const form =document.getElementById("form")
+        const city =document.getElementById("city")
+        $("#show_data").hide()
+        form.addEventListener("submit",sumbitHandler)
+        city.addEventListener("input",function (){
+            $("#show_data").hide()
+
+        })
+        function sumbitHandler(e){
+
+            e.preventDefault()
+            $.ajax({
+
+                type:"post",
+                url:"{% url 'get_weatherdata' %}",
+                data:$('#form').serialize(),
+                dataType:'json',
+                success: successHandler
+            })
+        }
+  
+        function successHandler(data){
+            const city_name=document.getElementById('city_name')
+            const atmosphere=document.getElementById('atmosphere')
+            const Temperature=document.getElementById('Temperature')
+            // $("#show_data").show()
+            $("#show_data").fadeIn(750)
+            city_name.textContent = data.city;
+            // $("#city_name").text(data.city)
+            atmosphere.textContent = `We have ${data.main}`
+            Temperature.textContent = `Temperature: ${data.temp} °C`
+            form.reset()
+            
+        }
+
+        $(document).ready(function() {
+            $("#city").autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "https://api.openweathermap.org/data/2.5/find",
+                        dataType: "json",
+                        data: {
+                            q: request.term,
+                            type: "accurate",
+                            sort: "population",
+                            cnt: 10,
+                            appid: "YOUR API KEY" 
+                        },
+                        success: function(data) {
+                            // Extract city names from the API response
+                            var cityNames = data.list.map(function(city) {
+                                return city.name;
+                            });
+                            // Filter out duplicates
+                        cityNames = cityNames.filter(function(name, index, self) {
+                        return self.indexOf(name) === index;
+                    });
+
+                            response(cityNames);
+                        }
+                    });
+                },
+                minLength: 1
+            });
+        });
+
+    </script>
+</body>
+</html>
